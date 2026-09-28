@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Past Simple & Past Continuous Bubble Game</title>
+<style>
+html,body{
+margin:0;
+width:100%;
+height:100%;
+overflow:hidden;
+font-family:Arial,sans-serif;
+background:transparent;
+}
+
+#game{
+position:relative;
+width:100%;
+height:100vh;
+overflow:hidden;
+background:transparent;
+}
+
+.bubble{
+ position:absolute;
+ cursor:pointer;
+ background-image:url('https://i.ibb.co/C5K25jtS/11.png');
+ background-size:contain;
+ background-repeat:no-repeat;
+ background-position:center;
+ transition:transform .3s,opacity .3s;
+}
+
+.bubble:hover{transform:scale(1.1);}
+
+#wordBox{
+ position:absolute;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ background:#c4b5fd;
+ padding:16px 20px;
+ border-radius:16px;
+ font-size:24px;
+ font-weight:bold;
+ display:none;
+ z-index:1000;
+ box-shadow:0 0 16px rgba(0,0,0,.18);
+ width:min(420px,80vw);
+ text-align:center;
+ color:#3b0764;
+}
+
+#win{
+ position:absolute;
+ top:50%;
+ left:50%;
+ transform:translate(-50%,-50%);
+ background:#8b5cf6;
+ padding:18px 22px;
+ border-radius:16px;
+ display:none;
+ text-align:center;
+ z-index:2000;
+ color:white;
+ box-shadow:0 0 16px rgba(0,0,0,.18);
+}
+
+button{
+ padding:9px 14px;
+ font-size:16px;
+ cursor:pointer;
+ border:0;
+ border-radius:10px;
+}
+
+#questionText{margin-bottom:12px;line-height:1.25;}
+.answerGrid{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.answerBtn{
+ background:#7c3aed;
+ color:white;
+ padding:9px 12px;
+ border-radius:10px;
+ font-size:16px;
+ font-weight:bold;
+ cursor:pointer;
+ border:2px solid rgba(255,255,255,.65);
+ min-width:105px;
+}
+.answerBtn:hover{transform:scale(1.04);}
+.answerBtn.correct{background:#a7f3d0;color:#14532d;}
+.answerBtn.wrong{background:#ddd6fe;color:#5b21b6;}
+#feedback{font-size:16px;margin-top:9px;min-height:20px;}
+</style>
+</head>
+<body>
+<div id="game">
+  <div id="wordBox">
+    <div id="questionText"></div>
+    <div class="answerGrid" id="answerGrid"></div>
+    <div id="feedback"></div>
+  </div>
+  <div id="win">
+    <h2>🎉 You Win!</h2>
+    <button onclick="restartGame()">Start Again</button>
+  </div>
+</div>
+
+<script>
+const questions=[
+ {q:"I ___ to the park yesterday.",a:["go","went","was going"],c:1},
+ {q:"She ___ dinner when I called.",a:["cooked","was cooking","cooks"],c:1},
+ {q:"They ___ football last Sunday.",a:["played","were playing","play"],c:0},
+ {q:"I ___ my homework at 7 p.m.",a:["did","was doing","do"],c:1},
+ {q:"He ___ his phone yesterday.",a:["broke","was breaking","breaks"],c:0},
+ {q:"We ___ TV when the lights went out.",a:["watched","were watching","watch"],c:1},
+ {q:"Tom ___ his room in the morning.",a:["cleaned","was cleaning","cleans"],c:0},
+ {q:"Anna ___ a book at 6 o'clock.",a:["read","was reading","reads"],c:1},
+ {q:"She ___ him while she was walking home.",a:["saw","was seeing","sees"],c:0},
+ {q:"They ___ when the alarm rang.",a:["slept","were sleeping","sleep"],c:1},
+ {q:"I ___ my project last night.",a:["finished","was finishing","finish"],c:0},
+ {q:"He ___ to work when it started to rain.",a:["drove","was driving","drives"],c:1},
+ {q:"We ___ to the park yesterday.",a:["went","were going","go"],c:0},
+ {q:"While I ___, my friend called me.",a:["studied","was studying","study"],c:1},
+ {q:"She ___ a new dress last week.",a:["bought","was buying","buys"],c:0},
+ {q:"The children ___ when their teacher came.",a:["played","were playing","play"],c:1},
+ {q:"I ___ Kate at the supermarket.",a:["met","was meeting","meet"],c:0},
+ {q:"He ___ a shower when the phone rang.",a:["took","was taking","takes"],c:1},
+ {q:"They ___ a film on Saturday.",a:["watched","were watching","watch"],c:0},
+ {q:"While we ___ dinner, Dad came home.",a:["had","were having","have"],c:1},
+ {q:"She ___ her keys yesterday.",a:["lost","was losing","loses"],c:0},
+ {q:"I ___ to school when I saw a dog.",a:["walked","was walking","walk"],c:1},
+ {q:"We ___ London last summer.",a:["visited","were visiting","visit"],c:0},
+ {q:"He ___ to music when I called.",a:["listened","was listening","listens"],c:1},
+ {q:"They ___ late yesterday.",a:["arrived","were arriving","arrive"],c:0}
+];
+
+const game=document.getElementById("game");
+const wordBox=document.getElementById("wordBox");
+const win=document.getElementById("win");
+const questionText=document.getElementById("questionText");
+const answerGrid=document.getElementById("answerGrid");
+const feedback=document.getElementById("feedback");
+
+let bubbles=[];
+let currentQuestion=0;
+let answered=false;
+
+function createBubbles(){
+  bubbles=[];
+  for(let i=0;i<25;i++){
+    const bubble=document.createElement("div");
+    bubble.className="bubble";
+    const size=110;
+    bubble.style.width=size+"px";
+    bubble.style.height=size+"px";
+    bubble.x=Math.random()*(window.innerWidth-size);
+    bubble.y=Math.random()*(window.innerHeight-size);
+    bubble.vx=(Math.random()-0.5)*3;
+    bubble.vy=(Math.random()-0.5)*3;
+    bubble.style.left=bubble.x+"px";
+    bubble.style.top=bubble.y+"px";
+    bubble.onclick=()=>popBubble(bubble);
+    game.appendChild(bubble);
+    bubbles.push(bubble);
+  }
+}
+
+function showQuestion(){
+  const item=questions[currentQuestion % questions.length];
+  answered=false;
+  questionText.innerText=item.q;
+  answerGrid.innerHTML="";
+  feedback.innerText="";
+  item.a.forEach((answer,index)=>{
+    const btn=document.createElement("button");
+    btn.className="answerBtn";
+    btn.innerText=answer;
+    btn.onclick=()=>checkAnswer(btn,index,item.c);
+    answerGrid.appendChild(btn);
+  });
+  wordBox.style.display="block";
+}
+
+function checkAnswer(btn,index,correct){
+  if(answered) return;
+  if(index===correct){
+    answered=true;
+    btn.classList.add("correct");
+    feedback.innerText="✓ Correct!";
+    setTimeout(()=>{
+      wordBox.style.display="none";
+      currentQuestion++;
+      if(currentQuestion>=questions.length) showWin();
+    },550);
+  }else{
+    btn.classList.add("wrong");
+    feedback.innerText="Try again!";
+  }
+}
+
+function popBubble(bubble){
+  bubble.style.opacity="0";
+  bubble.style.transform="scale(0)";
+  setTimeout(()=>{
+    bubble.remove();
+    bubbles=bubbles.filter(b=>b!==bubble);
+    showQuestion();
+    if(bubbles.length===0 && currentQuestion<questions.length) showWin();
+  },300);
+}
+
+function animate(){
+  bubbles.forEach(b=>{
+    b.x+=b.vx;
+    b.y+=b.vy;
+    if(b.x<=0 || b.x>=window.innerWidth-110) b.vx*=-1;
+    if(b.y<=0 || b.y>=window.innerHeight-110) b.vy*=-1;
+    b.style.left=b.x+"px";
+    b.style.top=b.y+"px";
+  });
+  requestAnimationFrame(animate);
+}
+
+function showWin(){win.style.display="block";}
+
+function restartGame(){
+  document.querySelectorAll(".bubble").forEach(b=>b.remove());
+  win.style.display="none";
+  wordBox.style.display="none";
+  currentQuestion=0;
+  answered=false;
+  createBubbles();
+}
+
+createBubbles();
+animate();
+</script>
+
+</body>
+</html>
